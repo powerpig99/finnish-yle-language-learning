@@ -13,7 +13,17 @@
  * @property {number} lastAccessedDays - Last accessed time in days since Unix epoch
  */
 
+/**
+ * @typedef {Object} WordTranslation
+ * @property {string} word - The original word (normalized, lowercase)
+ * @property {string} originalLanguage - The original language code (e.g., "FI")
+ * @property {string} targetLanguage - The target language code (e.g., "EN-US")
+ * @property {string} translation - The translated word
+ * @property {number} lastAccessedDays - Last accessed time in days since Unix epoch
+ */
+
 const DATABASE = "YleDualSubCache"
+const WORD_TRANSLATION_OBJECT_STORE = "WordTranslations"
 const SUBTITLE_CACHE_OBJECT_STORE = "SubtitlesCache"
 const DEPRECATED_ENGLISH_SUBTITLE_CACHE_OBJECT_STORE = "EnglishSubtitlesCache"
 const MOVIE_METADATA_OBJECT_STORE = "MovieMetadata"
@@ -25,7 +35,7 @@ const MOVIE_METADATA_OBJECT_STORE = "MovieMetadata"
 async function openDatabase() {
     return new Promise((resolve, reject) => {
 
-        const DBOpenRequest = indexedDB.open(DATABASE, 2);
+        const DBOpenRequest = indexedDB.open(DATABASE, 3);
 
         // Handle errors
         DBOpenRequest.onerror = (_event) => {
@@ -65,6 +75,15 @@ async function openDatabase() {
             if (db.objectStoreNames.contains(DEPRECATED_ENGLISH_SUBTITLE_CACHE_OBJECT_STORE)) {
                 console.info(`YleDualSubExtension: Deleting deprecated ${DEPRECATED_ENGLISH_SUBTITLE_CACHE_OBJECT_STORE} object store...`);
                 db.deleteObjectStore(DEPRECATED_ENGLISH_SUBTITLE_CACHE_OBJECT_STORE);
+            }
+
+            // Create word translations store if it doesn't exist (version 3)
+            if (!db.objectStoreNames.contains(WORD_TRANSLATION_OBJECT_STORE)) {
+                console.info(`YleDualSubExtension: Creating ${WORD_TRANSLATION_OBJECT_STORE} object store...`);
+                const wordTranslationsStore = db.createObjectStore(WORD_TRANSLATION_OBJECT_STORE, {
+                    keyPath: ['word', 'originalLanguage', 'targetLanguage'],
+                });
+                wordTranslationsStore.createIndex('byLastAccessed', 'lastAccessedDays', { unique: false });
             }
         };
     })
@@ -438,6 +457,177 @@ async function cleanupOldMovieData(db, maxAgeDays = 30) {
 
 }
 
+/**
+ * Get a word translation from IndexedDB
+ * @param {IDBDatabase} db - Opening database instance
+ * @param {string} word - The word to look up (will be normalized)
+ * @param {string} targetLanguage - Target language (e.g., "EN-US")
+ * @returns {Promise<WordTranslation|null>} The word translation or null if not found
+ */
+async function getWordTranslation(db, word, targetLanguage) {
+    const normalizedWord = word.toLowerCase().trim();
+    return new Promise((resolve, reject) => {
+        try {
+            const transaction = db.transaction([WORD_TRANSLATION_OBJECT_STORE], 'readonly');
+            const objectStore = transaction.objectStore(WORD_TRANSLATION_OBJECT_STORE);
+
+            const DBGetRequest = objectStore.get([normalizedWord, "FI", targetLanguage]);
+
+            DBGetRequest.onsuccess = (_event) => {
+                const result = DBGetRequest.result;
+                if (result) {
+                    resolve(result);
+                } else {
+                    resolve(null);
+                }
+            };
+
+            DBGetRequest.onerror = (_event) => {
+                console.error("YleDualSubExtension: getWordTranslation: Error getting word translation:", DBGetRequest.error);
+                reject(DBGetRequest.error);
+            };
+
+        } catch (error) {
+            console.error("YleDualSubExtension: getWordTranslation: Error in transaction:", error);
+            reject(error);
+        }
+    });
+}
+
+/**
+ * Save a word translation to IndexedDB
+ * @param {IDBDatabase} db - Opening database instance
+ * @param {string} word - The original word
+ * @param {string} targetLanguage - Target language (e.g., "EN-US")
+ * @param {string} translation - The translated word
+ * @returns {Promise<void>}
+ */
+async function saveWordTranslation(db, word, targetLanguage, translation) {
+    const normalizedWord = word.toLowerCase().trim();
+    const lastAccessedDays = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+
+    return new Promise((resolve, reject) => {
+        try {
+            const transaction = db.transaction([WORD_TRANSLATION_OBJECT_STORE], 'readwrite');
+            const objectStore = transaction.objectStore(WORD_TRANSLATION_OBJECT_STORE);
+
+            /** @type {WordTranslation} */
+            const wordTranslation = {
+                word: normalizedWord,
+                originalLanguage: "FI",
+                targetLanguage,
+                translation,
+                lastAccessedDays
+            };
+
+            const DBSaveRequest = objectStore.put(wordTranslation);
+
+            DBSaveRequest.onsuccess = (_event) => {
+                resolve();
+            };
+
+            DBSaveRequest.onerror = (_event) => {
+                console.error("YleDualSubExtension: saveWordTranslation: Error saving word translation:", DBSaveRequest.error);
+                reject(DBSaveRequest.error);
+            };
+
+        } catch (error) {
+            console.error("YleDualSubExtension: saveWordTranslation: Error in transaction:", error);
+            reject(error);
+        }
+    });
+}
+
+/**
+ * Clean up old word translations that haven't been accessed recently
+ * @param {IDBDatabase} db - Opening database instance
+ * @param {number} maxAgeDays - Maximum age in days (default: 60 days)
+ * @returns {Promise<number>} Number of word translations cleaned up
+ */
+async function cleanupOldWordTranslations(db, maxAgeDays = 60) {
+    const nowDays = Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+    const cutoffDays = nowDays - maxAgeDays;
+
+    return new Promise((resolve, reject) => {
+        try {
+            const transaction = db.transaction([WORD_TRANSLATION_OBJECT_STORE], 'readwrite');
+            const objectStore = transaction.objectStore(WORD_TRANSLATION_OBJECT_STORE);
+            const index = objectStore.index('byLastAccessed');
+
+            const range = IDBKeyRange.upperBound(cutoffDays);
+            const DBDeleteCursorRequest = index.openCursor(range);
+
+            let deletedCount = 0;
+
+            transaction.oncomplete = () => {
+                resolve(deletedCount);
+            };
+
+            transaction.onerror = (_event) => {
+                console.error("YleDualSubExtension: cleanupOldWordTranslations: Transaction error:", transaction.error);
+                reject(transaction.error);
+            };
+
+            DBDeleteCursorRequest.onsuccess = (_event) => {
+                const cursor = DBDeleteCursorRequest.result;
+                if (cursor) {
+                    cursor.delete();
+                    deletedCount++;
+                    cursor.continue();
+                }
+            };
+
+            DBDeleteCursorRequest.onerror = (_event) => {
+                console.error("YleDualSubExtension: cleanupOldWordTranslations: Error:", DBDeleteCursorRequest.error);
+                reject(DBDeleteCursorRequest.error);
+            };
+
+        } catch (error) {
+            console.error("YleDualSubExtension: cleanupOldWordTranslations: Error in transaction:", error);
+            reject(error);
+        }
+    });
+}
+
+/**
+ * Clear ALL word translations from the cache
+ * Use this to reset bad/outdated cached translations
+ * @param {IDBDatabase} db - Opening database instance
+ * @returns {Promise<number>} Number of word translations cleared
+ */
+async function clearAllWordTranslations(db) {
+    return new Promise((resolve, reject) => {
+        try {
+            const transaction = db.transaction([WORD_TRANSLATION_OBJECT_STORE], 'readwrite');
+            const objectStore = transaction.objectStore(WORD_TRANSLATION_OBJECT_STORE);
+
+            const countRequest = objectStore.count();
+            countRequest.onsuccess = () => {
+                const count = countRequest.result;
+                const clearRequest = objectStore.clear();
+
+                clearRequest.onsuccess = () => {
+                    console.info(`YleDualSubExtension: Cleared ${count} word translations from cache`);
+                    resolve(count);
+                };
+
+                clearRequest.onerror = (_event) => {
+                    console.error("YleDualSubExtension: clearAllWordTranslations: Error:", clearRequest.error);
+                    reject(clearRequest.error);
+                };
+            };
+
+            countRequest.onerror = (_event) => {
+                reject(countRequest.error);
+            };
+
+        } catch (error) {
+            console.error("YleDualSubExtension: clearAllWordTranslations: Error in transaction:", error);
+            reject(error);
+        }
+    });
+}
+
 // Conditional export for testing
 // Check for module.exports first (CommonJS/Node.js environment)
 // @ts-ignore - module may not be defined in browser
@@ -453,7 +643,11 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
         upsertMovieMetadata,
         getAllMovieMetadata,
         deleteMovieMetadata,
-        cleanupOldMovieData
+        cleanupOldMovieData,
+        getWordTranslation,
+        saveWordTranslation,
+        cleanupOldWordTranslations,
+        clearAllWordTranslations
     };
 }
 // In browser extension (content script), functions are automatically global

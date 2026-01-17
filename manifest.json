@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Learn Finnish - Dual Sub for YLE Areena",
-  "version": "2.0.4",
-  "description": "Learn Finnish with dual language subtitles on YLE Areena. Support translation to English, Vietnamese, German and others.",
+  "name": "Finnish Language Learning for YLE Areena",
+  "version": "3.1.0",
+  "description": "Learn Finnish with dual subtitles, popup dictionary with AI translation, auto-pause, and playback speed control on YLE Areena. Supports Google Translate, DeepL, Claude, Gemini, and Grok.",
   "icons": {
     "16": "icons/icon.png",
     "48": "icons/icon.png",
@@ -19,7 +19,14 @@
       "css": ["styles.css"]
     }
   ],
-  "host_permissions": ["https://api-free.deepl.com/*", "https://api.deepl.com/*"],
+  "host_permissions": [
+    "https://api-free.deepl.com/*",
+    "https://api.deepl.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.x.ai/*"
+  ],
   "permissions": ["storage"],
   "web_accessible_resources": [
     {
@@ -28,7 +35,7 @@
     }
   ],
   "action": {
-    "default_title": "YLE Areena Dual Subtitles",
+    "default_title": "Finnish Language Learning for YLE",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon.png",

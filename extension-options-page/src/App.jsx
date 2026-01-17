@@ -988,6 +988,8 @@ function TokenManagementHelpSection() {
 
 function PersonalSettingsSection() {
   const [targetLanguage, setTargetLanguage] = useState("EN-US");
+  const [translationProvider, setTranslationProvider] = useState("google");
+  const [providerApiKey, setProviderApiKey] = useState("");
 
   useEffect(() => {
     ChromeStorageSyncHandler.getTargetLanguage()
@@ -997,6 +999,23 @@ function PersonalSettingsSection() {
       .catch((error) => {
         console.error(
           "YleDualSubExtension: Error loading target language from Chrome storage:",
+          error
+        );
+      });
+
+    // Load translation provider settings
+    chrome.storage.sync.get(['translationProvider', 'providerApiKey'])
+      .then((result) => {
+        if (result.translationProvider) {
+          setTranslationProvider(result.translationProvider);
+        }
+        if (result.providerApiKey) {
+          setProviderApiKey(result.providerApiKey);
+        }
+      })
+      .catch((error) => {
+        console.error(
+          "YleDualSubExtension: Error loading provider settings:",
           error
         );
       });
@@ -1022,17 +1041,87 @@ function PersonalSettingsSection() {
     }
   }
 
+  function handleProviderChange(event) {
+    const newProvider = event.target.value;
+    setTranslationProvider(newProvider);
+    
+    chrome.storage.sync.set({ translationProvider: newProvider })
+      .catch((error) => {
+        console.error("YleDualSubExtension: Error saving provider:", error);
+        alert("Failed to save translation provider. Please try again.");
+      });
+  }
+
+  function handleApiKeyChange(event) {
+    const newApiKey = event.target.value;
+    setProviderApiKey(newApiKey);
+  }
+
+  function handleApiKeyBlur() {
+    chrome.storage.sync.set({ providerApiKey: providerApiKey })
+      .catch((error) => {
+        console.error("YleDualSubExtension: Error saving API key:", error);
+        alert("Failed to save API key. Please try again.");
+      });
+  }
+
+  const providerNeedsApiKey = translationProvider !== 'google';
+
   return (
     <div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <label className="add-token-form__input-label">
-          Target Language for Translation
-        </label>
-        <select
-          value={targetLanguage}
-          onChange={handleTargetLanguageChange}
-          className="language-select-dropdown"
-        >
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label className="add-token-form__input-label">
+            Translation Provider
+          </label>
+          <select
+            value={translationProvider}
+            onChange={handleProviderChange}
+            className="language-select-dropdown"
+          >
+            <option value="google">Google Translate (Free, No API key needed)</option>
+            <option value="deepl">DeepL (Requires API key)</option>
+            <option value="claude">Claude (Anthropic) (Requires API key)</option>
+            <option value="gemini">Gemini (Google AI) (Requires API key)</option>
+            <option value="grok">Grok (xAI) (Requires API key)</option>
+          </select>
+          <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
+            <strong>Note:</strong> Google Translate is free and works without any setup. 
+            Other providers offer better quality but require API keys.
+          </p>
+        </div>
+
+        {providerNeedsApiKey && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <label className="add-token-form__input-label">
+              API Key for {translationProvider.charAt(0).toUpperCase() + translationProvider.slice(1)}
+            </label>
+            <input
+              type="password"
+              value={providerApiKey}
+              onChange={handleApiKeyChange}
+              onBlur={handleApiKeyBlur}
+              className="add-token-form__input-field"
+              placeholder="Enter your API key here"
+            />
+            <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
+              {translationProvider === 'deepl' && "Get your DeepL API key from the 'Translation Keys Management' section above, or visit deepl.com/pro-api"}
+              {translationProvider === 'claude' && "Get your Claude API key from console.anthropic.com"}
+              {translationProvider === 'gemini' && "Get your Gemini API key from aistudio.google.com"}
+              {translationProvider === 'grok' && "Get your Grok API key from x.ai"}
+            </p>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label className="add-token-form__input-label">
+            Target Language for Translation
+          </label>
+          <select
+            value={targetLanguage}
+            onChange={handleTargetLanguageChange}
+            className="language-select-dropdown"
+          >
           <option value="EN-US">English (US)</option>
           <option value="EN-GB">English (UK)</option>
           <option value="VI">Vietnamese</option>
@@ -1074,7 +1163,44 @@ function PersonalSettingsSection() {
           need to reload the YLE Areena page for the change to take effect.
         </p>
       </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+          <label className="add-token-form__input-label">
+            Cache Management
+          </label>
+          <button
+            onClick={async () => {
+              try {
+                const response = await chrome.runtime.sendMessage({ action: 'clearWordCache' });
+                if (response && response.success) {
+                  alert(`Cleared ${response.count} cached word translations. Old/bad translations will be re-fetched.`);
+                } else {
+                  alert('Failed to clear cache: ' + (response?.error || 'Unknown error'));
+                }
+              } catch (error) {
+                alert('Error clearing cache: ' + error.message);
+              }
+            }}
+            style={{
+              padding: "10px 16px",
+              background: "rgba(239, 68, 68, 0.2)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "6px",
+              color: "#f87171",
+              cursor: "pointer",
+              fontSize: "14px",
+              width: "fit-content"
+            }}
+          >
+            Clear Word Translation Cache
+          </button>
+          <p style={{ fontSize: "14px", color: "#666", margin: "8px 0 0 0" }}>
+            Use this if word translations are showing incorrect/outdated results.
+            Cached translations will be re-fetched from Wiktionary or AI.
+          </p>
+        </div>
     </div>
+  </div>
   );
 }
 

@@ -1,71 +1,119 @@
-# YLE Dual Sub Extension
+# Finnish Language Learning for YLE Areena
 
-A Chrome extension that adds dual subtitles to YLE Areena videos, helping you learn Finnish through immersion by displaying Finnish subtitles alongside translations in your preferred language.
+A Chrome extension that transforms YLE Areena into an immersive Finnish language learning platform. Display dual subtitles, click any word for instant translation, and control playback to study at your own pace.
 
-## What It Does
+## Features
 
-This extension integrates with YLE Areena's video player to show dual subtitles - Finnish on top, your chosen translation below. As you watch Finnish TV shows, movies, and documentaries, you can follow along in both languages simultaneously.
+- **Dual Subtitles**: Finnish subtitles with translations in your target language displayed below
+- **Popup Dictionary**: Click any Finnish word to see its translation
+  - Wiktionary definitions when available
+  - AI-powered contextual translation as fallback (Claude/Gemini/Grok)
+  - "Ask AI" button for alternative translations
+- **Auto-Pause**: Automatically pause after each subtitle line (toggle with P key)
+- **Subtitle Navigation**: Skip to previous/next subtitle with `,` and `.` keys
+- **Playback Speed Control**: Adjust from 1x to 2x in 0.25x increments
+- **Multiple Translation Providers**:
+  - Google Translate (free, no API key required)
+  - DeepL (high quality, free API key available)
+  - Claude, Gemini, Grok (AI-powered with context)
+- **Smart Caching**: Translations cached locally for instant replay
+- **Clean Viewing Mode**: Controls hide during playback, appear on mouse movement
+- **Fullscreen Support**: All features work in fullscreen mode
 
-Check [project video demo](https://www.youtube.com/watch?v=O3B7BCvd99Y)
+## Keyboard Shortcuts
 
-## Key Features
-
-- **Dual Subtitle Display** - Finnish + translated subtitles shown side-by-side
-- **Multiple Language Support** - Translate to English, Vietnamese, Japanese, Spanish, or any of the 37 languages supported by DeepL
-- **Smart Caching** - Translations stored locally for 30 days; rewatching videos uses zero API calls
-- **Multi-Token Support** - Add up to 5 DeepL API tokens with visual usage tracking
-- **One-Click Toggle** - Enable/disable dual subtitles directly in the video player
-- **Shadowing Tools** - Rewind/forward 1 second buttons + keyboard shortcuts (`,` and `.` keys) for pronunciation practice
-- **Privacy-First** - All data stays in your browser; no tracking, no ads
-
-## Why I Built This
-
-I've passed the YKI test (all 4 skills) and completed Suomen Mestari 4. But until then, my skill is far from enough to hold a deep and meaningful conversation in Finnish. That is because, the spoken language, with many slangs and its own rules, is different from what we learned in the grammar books. Finnish people speak perfect English so it is not easy to practice in the real life, plus that my level is not enough to discuss complicated topics.
-
-This extension is my plan to reach the next level, where you can expose to authentic spoken Finnish in the safe environment, where you dont have pressure to speak. You have access to all contents in YLE Areena to immerse not only in the language, but also in the culture and history. You can even use it to watch news, even president speeches regardless of your Finnish level.
-
-## How It Works
-
-1. You watch videos on YLE Areena with Finnish subtitles enabled
-2. The extension intercepts Finnish subtitle text
-3. Text is translated via DeepL API using your personal API key
-4. Translations are cached locally in IndexedDB for 30 days
-5. Both Finnish and translated subtitles display in the video player
+| Key | Action |
+|-----|--------|
+| `,` | Skip to previous subtitle |
+| `.` | Skip to next subtitle |
+| `P` | Toggle auto-pause |
+| `Space` | Play/pause video |
 
 ## Installation
 
-Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/yle-areena-dual-subtitles/olmapcjpickcoabnjleheppoignffpdd)
+### Chrome Web Store
+*Coming soon*
 
-See the [documentation site](https://anhtumai.github.io/yle-dual-sub/) for setup instructions and usage guide.
+### Manual Installation
 
-## Technology Stack
+1. Download or clone this repository
+2. Open Chrome and navigate to `chrome://extensions/`
+3. Enable "Developer mode" (top right)
+4. Click "Load unpacked" and select the extension folder
+5. The extension icon will appear in your toolbar
 
-- **Manifest V3** Chrome Extension
-- **DeepL API** for high-quality translations
-- **IndexedDB** for local caching with multi-language support
-- **Chrome Storage Sync** for cross-device settings persistence
-- **React** for the settings UI
+## Setup
+
+1. Go to [YLE Areena](https://areena.yle.fi/)
+2. Play any video with Finnish subtitles
+3. Enable "Dual Sub" in the video controls
+4. (Optional) Click the extension icon → Settings to:
+   - Choose your target language
+   - Select translation provider
+   - Add API keys for premium providers
+
+### Translation Providers
+
+| Provider | API Key Required | Best For |
+|----------|-----------------|----------|
+| Google Translate | No | Quick setup, basic translations |
+| DeepL | Yes (free tier available) | High-quality translations |
+| Claude | Yes | Context-aware word lookups |
+| Gemini | Yes | Context-aware word lookups |
+| Grok | Yes | Context-aware word lookups |
+
+## How It Works
+
+1. Extension intercepts YLE Areena's subtitle data (WebVTT format)
+2. Finnish subtitles are displayed with translations below
+3. Clicking a word queries Wiktionary, then falls back to AI translation
+4. All translations are cached locally in IndexedDB
 
 ## Development
 
+### Project Structure
+
+```
+├── manifest.json           # Chrome extension manifest (v3)
+├── background.js           # Service worker for API calls
+├── contentscript.js        # Main content script
+├── injected.js            # Page context script
+├── database.js            # IndexedDB caching
+├── styles.css             # UI styling
+├── popup.html/js          # Extension popup
+└── extension-options-page/ # React settings page
+```
+
+### Building
+
 ```bash
-# Install dependencies
-npm install
-
-# Run linting check
-npm run lint
-
-# Run type checking
-npm run type-check
-
-# Build settings page
+# Build the options page
 cd extension-options-page
 npm install
 npm run build
 ```
 
-## Architecture
+### Testing
+
+Load the extension in developer mode and test on YLE Areena.
+
+## Privacy
+
+- All caching is local (IndexedDB in your browser)
+- API keys stored in Chrome sync storage
+- No analytics or tracking
+- Only sends data to your chosen translation provider
+
+## Contributing
+
+Contributions welcome! Please open issues for bugs or feature requests.
 
 ## License
 
 GPL v3 (GNU General Public License v3)
+
+## Acknowledgments
+
+- Inspired by [Language Reactor](https://www.languagereactor.com/)
+- [Wiktionary](https://en.wiktionary.org/) for word definitions
+- [YLE Areena](https://areena.yle.fi/) for Finnish content

@@ -913,19 +913,39 @@ const vttParser = new WebVTTParser();
 
                 const vttFileTree = vttParser.parse(fullVttFileResponseText);
 
+                // Collect all subtitles with timing for batch translation
+                const allSubtitles = [];
+
                 for (const cue of vttFileTree.cues) {
                     if (cue && typeof cue.text === "string") {
                         const subtitle = cue.text.replace(/\n/g, " ").replace(/\s+/g, " ").trim();
                         if (subtitle.length > 0) {
-                            const customEvent = new CustomEvent("sendTranslationTextEvent", {
-                                bubbles: true,
-                                cancelable: true,
-                                detail: subtitle,
+                            allSubtitles.push({
+                                text: subtitle,
+                                startTime: cue.startTime,
+                                endTime: cue.endTime
                             });
-                            document.dispatchEvent(customEvent);
                         }
                     }
                 }
+
+                // Send batch event FIRST with all subtitles for contextual translation
+                // This allows the batch handler to set isBatchTranslating flag before individual events
+                if (allSubtitles.length > 0) {
+                    const batchEvent = new CustomEvent("sendBatchTranslationEvent", {
+                        bubbles: true,
+                        cancelable: true,
+                        detail: {
+                            subtitles: allSubtitles,
+                            vttUrl: this._url
+                        }
+                    });
+                    document.dispatchEvent(batchEvent);
+                    console.info(`YleDualSubExtension: Sent batch of ${allSubtitles.length} subtitles for translation`);
+                }
+
+                // Individual events are no longer needed since batch handles all subtitles
+                // Keeping this as fallback only if batch somehow fails
             } catch (e) {
                 console.error("YleDualSubExtension: Failed to parse VTT file:", e);
             }

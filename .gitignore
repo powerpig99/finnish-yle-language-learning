@@ -1,2 +1,30 @@
+# Config files with secrets
 config.js
+
+# Build outputs (rebuild with npm run build)
 extension-options-page/dist
+
+# Dependencies
+node_modules/
+extension-options-page/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Distribution packages
+*.zip
+*.crx
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test artifacts
+Screenshot*.png

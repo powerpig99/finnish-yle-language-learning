@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YLE Dual Sub</title>
+  <title>Finnish Language Learning for YLE</title>
   <style>
     body {
-      width: 320px;
+      width: 340px;
       padding: 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial,
         sans-serif;
@@ -26,7 +26,7 @@
 
     h1 {
       margin: 0 0 12px 0;
-      font-size: 22px;
+      font-size: 20px;
       color: #ffffff;
     }
 
@@ -114,45 +114,41 @@
       font-size: 12px;
       color: #888888;
       text-align: center;
-      font-style: italic;
+      line-height: 1.6;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1><span class="emoji">🇫🇮</span> YLE Dual Sub <span class="emoji">📺</span></h1>
-    <div class="subtitle">Learn Finnish by watching YLE Areena with dual subtitles</div>
+    <h1>Finnish Language Learning for YLE</h1>
+    <div class="subtitle">Learn Finnish by watching YLE Areena with immersive tools!</div>
     <div class="description">
-      Watch Finnish content with both Finnish and target language (English, Vietnamese) subtitles displayed
-      simultaneously - the perfect tool for immersive language learning!
+      Watch Finnish content with dual subtitles, click any word for instant translation,
+      and control playback to study at your own pace.
     </div>
     <div class="features">
-      <strong>✨ Features:</strong>
+      <strong>Features:</strong>
       <ul>
-        <li>Finnish + Target language dual subtitles</li>
-        <li>Powered by DeepL translation</li>
-        <li>Rewind/forward buttons (1 second)</li>
-        <li>Works on all YLE Areena content</li>
-        <li>Free for basic usage, but requires a bit setup</li>
+        <li>Dual subtitles (Finnish + your language)</li>
+        <li>Click any word for popup dictionary</li>
+        <li>Auto-pause after each subtitle (P key)</li>
+        <li>Skip subtitles with , and . keys</li>
+        <li>Playback speed control (1x - 2x)</li>
+        <li>Multiple translation providers (Google, DeepL, Claude, Gemini, Grok)</li>
       </ul>
     </div>
     <div class="buttons">
-      <a href="https://anhtumai.github.io/yle-dual-sub" class="button button-secondary" target="_blank" id="guideLink">
-        <span>📖</span>
-        <span>Guide</span>
+      <a href="https://github.com/jingliangc/finnish-yle-language-learning" class="button button-secondary" target="_blank">
+        <span>GitHub</span>
       </a>
       <a class="button button-primary" id="setupLink">
-        <span>⚙️</span>
         <span>Settings</span>
       </a>
     </div>
     <div class="note">
-      ⚡ First time? Click "Settings" to add your free DeepL translation key
-      <br />
-      (A translation key is like a password that lets you use DeepL's service)
-      <br />
-      📖 Need help? Check the guide for step-by-step instructions!
+      Google Translate works without an API key.<br>
+      For AI-powered word lookup, configure Claude/Gemini/Grok in Settings.
     </div>
   </div>
   <script src="popup.js"></script>

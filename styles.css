@@ -185,3 +185,316 @@
 .translated-text-span {
   transform: scale(0.875);
 }
+
+/* Word item styling for popup dictionary */
+.word-item {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-radius: 2px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+.word-item:hover {
+  background-color: rgba(59, 130, 246, 0.3);
+}
+
+.word-item.active {
+  background-color: rgba(59, 130, 246, 0.5);
+}
+
+/* Word tooltip popup */
+.word-tooltip {
+  position: fixed;
+  z-index: 10000;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #f1f5f9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+  max-width: 300px;
+  min-width: 150px;
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transform: translateY(5px);
+}
+
+.word-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.word-tooltip__original {
+  font-size: 18px;
+  font-weight: 600;
+  color: #60a5fa;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.word-tooltip__translation {
+  font-size: 16px;
+  color: #e2e8f0;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.word-tooltip__loading {
+  color: #94a3b8;
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.word-tooltip__loading::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border: 2px solid #475569;
+  border-top-color: #60a5fa;
+  border-radius: 50%;
+  animation: tooltip-spin 0.8s linear infinite;
+}
+
+@keyframes tooltip-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.word-tooltip__error {
+  color: #f87171;
+  font-size: 13px;
+}
+
+.word-tooltip__link {
+  display: block;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #60a5fa;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.word-tooltip__link:hover {
+  color: #93c5fd;
+  text-decoration: underline;
+}
+
+.word-tooltip__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.word-tooltip__btn {
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: #60a5fa;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.word-tooltip__btn:hover {
+  background: rgba(59, 130, 246, 0.4);
+}
+
+/* Auto-pause indicator */
+.auto-pause-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 4px;
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.auto-pause-indicator.inactive {
+  background: rgba(100, 116, 139, 0.2);
+  border-color: rgba(100, 116, 139, 0.4);
+  color: #94a3b8;
+}
+
+.auto-pause-indicator__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Auto-pause switch styling */
+.auto-pause-switch {
+  position: relative;
+  height: 1.2rem;
+  width: 2.4rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 9999px;
+  background-color: rgba(100, 116, 139, 0.377);
+  transition: all 0.3s ease;
+}
+
+.auto-pause-switch:checked {
+  background-color: rgba(34, 197, 94, 1);
+}
+
+.auto-pause-switch::before {
+  position: absolute;
+  content: "";
+  left: calc(1.2rem - 1.3rem);
+  top: calc(1.2rem - 1.3rem);
+  display: block;
+  height: 1.3rem;
+  width: 1.3rem;
+  cursor: pointer;
+  border: 1px solid rgba(100, 116, 139, 0.527);
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 1);
+  box-shadow: 0 3px 10px rgba(100, 116, 139, 0.327);
+  transition: all 0.3s ease;
+}
+
+.auto-pause-switch:checked:before {
+  transform: translateX(100%);
+  border-color: rgba(34, 197, 94, 1);
+}
+
+/* Playback speed select styling */
+.yle-speed-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.2s ease;
+}
+
+.yle-speed-select:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.yle-speed-select:focus {
+  border-color: rgba(236, 72, 153, 0.8);
+}
+
+.yle-speed-select option {
+  background: #1e293b;
+  color: white;
+}
+
+/* ============================================
+   YLE Areena Clean Pause Mode
+   Hide YLE controls on mouse inactivity,
+   but keep extension controls always visible
+   ============================================ */
+
+/* Hide pause recommendations overlay completely */
+div[class*="PauseRecommendations__PauseRecommendationsBackground"],
+div[class*="PauseRecommendations__"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Hide next episode overlay */
+div[class*="NextEpisodeOverlay__NextEpisode"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* ============================================
+   Mouse inactivity: Hide YLE controls
+   ============================================ */
+
+/* Hide top control bar (title, back button) */
+div[class*="TopControlBar__ControlBar"] {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Hide timeline */
+div[class*="Timeline__TimelineContainer"] {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Hide YLE's native control buttons (play, rewind, forward, volume) */
+div[class*="BottomControlBar__LeftControls"] > button,
+div[class*="BottomControlBar__LeftControls"] > div[class*="Volume__"] {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Hide right controls (settings, fullscreen, etc) */
+div[class*="BottomControlBar__RightControls"] {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Extension controls follow same hide/show behavior as YLE controls */
+/* Hidden by default during playback */
+.dual-sub-extension-section {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Show extension controls when mouse is active */
+div[class*="PlayerUI__UI"].yle-mouse-active .dual-sub-extension-section {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* ============================================
+   Show YLE controls on mouse activity
+   ============================================ */
+
+/* Show all controls when mouse is active */
+div[class*="PlayerUI__UI"].yle-mouse-active div[class*="TopControlBar__ControlBar"],
+div[class*="PlayerUI__UI"].yle-mouse-active div[class*="Timeline__TimelineContainer"],
+div[class*="PlayerUI__UI"].yle-mouse-active div[class*="BottomControlBar__LeftControls"] > button,
+div[class*="PlayerUI__UI"].yle-mouse-active div[class*="BottomControlBar__LeftControls"] > div[class*="Volume__"],
+div[class*="PlayerUI__UI"].yle-mouse-active div[class*="BottomControlBar__RightControls"] {
+  opacity: 1 !important;
+  pointer-events: auto;
+}
+
+/* Hide site navigation when watching video */
+body:has(video) nav[class*="Navigation_root"] {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none;
+}
+
+/* Show navigation when mouse is active */
+body.yle-mouse-active nav[class*="Navigation_root"] {
+  opacity: 1 !important;
+  pointer-events: auto;
+}
