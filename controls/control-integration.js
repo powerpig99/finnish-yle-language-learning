@@ -370,10 +370,21 @@ const ControlIntegration = {
       return;
     }
 
-    // Check if subtitles are loaded
+    // Check if subtitles are loaded - try to sync from global fullSubtitles if empty
+    // NOTE: Only use fullSubtitles here - it's the platform-agnostic array that ALL platforms populate
+    // Do NOT add platform-specific variables (like ytCurrentSubtitles) to this unified module
     if (!this._subtitles || this._subtitles.length === 0) {
-      AudioDownloadUI.showError('Please wait for subtitles to load before downloading audio');
-      return;
+      // Fallback: try to sync from global fullSubtitles array (handles timing issues)
+      if (typeof fullSubtitles !== 'undefined' && fullSubtitles.length > 0) {
+        console.info('DualSubExtension: Syncing subtitles from global fullSubtitles array for download');
+        this.setSubtitles(fullSubtitles);
+      }
+
+      // Check again after fallback sync
+      if (!this._subtitles || this._subtitles.length === 0) {
+        AudioDownloadUI.showError('Please wait for subtitles to load before downloading audio');
+        return;
+      }
     }
 
     // Check browser support

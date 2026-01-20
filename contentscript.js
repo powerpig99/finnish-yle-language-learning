@@ -645,19 +645,48 @@ async function handleBatchTranslation(subtitles) {
  * @returns {Promise<[true, Array<string>]|[false, string]>}
  */
 async function fetchBatchTranslation(texts) {
-  try {
-    const response = await safeSendMessage({
-      action: 'fetchBatchTranslation',
-      data: { texts, targetLanguage, isContextual: true }
-    });
-    if (response === null) {
-      return [false, 'Extension context invalidated'];
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const response = await safeSendMessage({
+        action: 'fetchBatchTranslation',
+        data: { texts, targetLanguage, isContextual: true }
+      });
+
+      if (response === null) {
+        // Extension context invalidated - service worker might have been terminated
+        // Wait and retry as it should restart
+        if (attempt < MAX_RETRIES - 1) {
+          console.warn(`YleDualSubExtension: Service worker not responding, retrying in ${RETRY_DELAY}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+          await sleep(RETRY_DELAY);
+          continue;
+        }
+        return [false, 'Extension context invalidated'];
+      }
+
+      return response;
+    } catch (error) {
+      const errorMsg = error.message || String(error);
+
+      // Check for service worker termination errors - retry these
+      const isServiceWorkerError = errorMsg.includes('message channel closed') ||
+                                   errorMsg.includes('Extension context invalidated') ||
+                                   errorMsg.includes('Receiving end does not exist');
+
+      if (isServiceWorkerError && attempt < MAX_RETRIES - 1) {
+        console.warn(`YleDualSubExtension: Service worker error, retrying in ${RETRY_DELAY}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, errorMsg);
+        await sleep(RETRY_DELAY);
+        continue;
+      }
+
+      console.error("YleDualSubExtension: Error sending batch translation request:", error);
+      return [false, errorMsg];
     }
-    return response;
-  } catch (error) {
-    console.error("YleDualSubExtension: Error sending batch translation request:", error);
-    return [false, error.message || String(error)];
   }
+
+  return [false, 'Translation failed after retries'];
 }
 
 /**
@@ -731,22 +760,50 @@ function hideBatchTranslationIndicator() {
 
  */
 async function fetchTranslation(rawSubtitleFinnishTexts) {
-  try {
-    /**
-     * @type {[true, Array<string>] | [false, string] | null}
-     */
-    const response = await safeSendMessage({
-      action: 'fetchTranslation',
-      data: { rawSubtitleFinnishTexts, targetLanguage }
-    });
-    if (response === null) {
-      return [false, 'Extension context invalidated'];
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      /**
+       * @type {[true, Array<string>] | [false, string] | null}
+       */
+      const response = await safeSendMessage({
+        action: 'fetchTranslation',
+        data: { rawSubtitleFinnishTexts, targetLanguage }
+      });
+
+      if (response === null) {
+        // Extension context invalidated - service worker might have been terminated
+        if (attempt < MAX_RETRIES - 1) {
+          console.warn(`YleDualSubExtension: Service worker not responding, retrying in ${RETRY_DELAY}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+          await sleep(RETRY_DELAY);
+          continue;
+        }
+        return [false, 'Extension context invalidated'];
+      }
+
+      return response;
+    } catch (error) {
+      const errorMsg = error.message || String(error);
+
+      // Check for service worker termination errors - retry these
+      const isServiceWorkerError = errorMsg.includes('message channel closed') ||
+                                   errorMsg.includes('Extension context invalidated') ||
+                                   errorMsg.includes('Receiving end does not exist');
+
+      if (isServiceWorkerError && attempt < MAX_RETRIES - 1) {
+        console.warn(`YleDualSubExtension: Service worker error, retrying in ${RETRY_DELAY}ms (attempt ${attempt + 1}/${MAX_RETRIES}):`, errorMsg);
+        await sleep(RETRY_DELAY);
+        continue;
+      }
+
+      console.error("YleDualSubExtension: Error sending message to background for translation:", error);
+      return [false, errorMsg];
     }
-    return response;
-  } catch (error) {
-    console.error("YleDualSubExtension: Error sending message to background for translation:", error);
-    return [false, error.message || String(error)];
   }
+
+  return [false, 'Translation failed after retries'];
 }
 
 // ==================================
@@ -2619,10 +2676,36 @@ if (currentPlatform.name === 'youtube') {
   }
 
   /**
+   * Ensure YouTube subtitle overlay exists, recreate if removed by YouTube DOM updates
+   * @returns {HTMLElement|null} The wrapper element or null if player not found
+   */
+  function ensureYouTubeSubtitleOverlay() {
+    let wrapper = document.getElementById('displayed-subtitles-wrapper');
+    if (wrapper) return wrapper;
+
+    // Overlay was removed (YouTube re-render, ad transition, fullscreen, etc.)
+    // Recreate it
+    console.info('DualSubExtension: Subtitle overlay was removed, recreating...');
+
+    const player = YouTubeAdapter.getPlayerContainer();
+    if (!player) {
+      console.warn('DualSubExtension: Cannot recreate overlay - player not found');
+      return null;
+    }
+
+    const overlay = YouTubeAdapter.createSubtitleOverlay();
+    const subtitleWrapper = YouTubeAdapter.createSubtitleDisplayWrapper();
+    overlay.appendChild(subtitleWrapper);
+    YouTubeAdapter.positionSubtitleOverlay(overlay);
+
+    return subtitleWrapper;
+  }
+
+  /**
    * Display dual subtitle on YouTube
    */
   function displayYouTubeSubtitle(originalText) {
-    const wrapper = document.getElementById('displayed-subtitles-wrapper');
+    const wrapper = ensureYouTubeSubtitleOverlay();
     if (!wrapper) return;
 
     // Hide YouTube's native captions each time we display our own
