@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YLE Language Learning Subtitles",
+  "name": "YLE Finnish Learner",
   "version": "5.0.0",
-  "description": "Learn languages with dual subtitles, popup dictionary, and playback controls on YLE Areena.",
+  "description": "Learn Finnish with dual subtitles, popup dictionary, and playback controls on YLE Areena.",
   "icons": {
     "16": "icons/icon.png",
     "48": "icons/icon.png",
@@ -52,7 +52,7 @@
     }
   ],
   "action": {
-    "default_title": "YLE Language Learning Subtitles",
+    "default_title": "YLE Finnish Learner",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon.png",

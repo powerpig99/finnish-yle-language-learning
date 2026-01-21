@@ -1,10 +1,12 @@
-# YLE Language Reactor
+# YLE Finnish Learner
 
-A Chrome extension for immersive language learning on YLE Areena (Finnish public broadcasting). Display dual subtitles, click any word for instant translation, and control playback to study at your own pace.
+A Chrome extension for learning Finnish through YLE Areena (Finnish public broadcasting). Display dual subtitles, click any word for instant translation, and control playback to study at your own pace.
 
-## Supported Platform
+## Currently Supported
 
-- **YLE Areena** - Finnish public broadcasting (areena.yle.fi)
+- **YLE Areena** (areena.yle.fi) - Finnish public broadcasting with Finnish subtitles
+
+> **Note:** This extension currently supports YLE Areena only. Support for additional platforms (YouTube, Netflix, etc.) is planned for future releases.
 
 ## Features
 
