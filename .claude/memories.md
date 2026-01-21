@@ -1,15 +1,18 @@
-# Project Memories - Language Learning Subtitles Extension
+# Project Memories - YLE Finnish Learner (v5.0.0)
 
-## ⚠️ GUIDING PRINCIPLE: Unified Interface (Added: 2026-01-19)
+## Project Status (Updated: 2026-01-22)
 
-**CRITICAL:** Keep unified interface and controls across ALL platforms. Only adjust translation/adapter layers, NOT control logic.
+- **Current Version:** v5.0.0
+- **Platform:** YLE Areena only (areena.yle.fi)
+- **Chrome Web Store:** Submitted January 2026 (pending review)
+- **GitHub:** https://github.com/AuYuRa/yle-finnish-learner
 
-- **ControlActions** = ONLY place for action logic (skip, repeat, speed, auto-pause)
-- **ControlIntegration** = ONLY bridge between controls and contentscript
-- **Platform adapters** = ONLY provide video element, subtitle data, mount points
-- **Fix once, works everywhere** - don't duplicate logic per platform
+## Architecture Overview
 
-If you find yourself writing platform-specific control logic in contentscript.js, STOP and put it in the unified layer instead.
+- **ControlActions** = Action logic (skip, repeat, speed, auto-pause)
+- **ControlIntegration** = Bridge between controls and contentscript
+- **yle-adapter.js** = YLE-specific video/subtitle handling
+- **yle-injected.js** = Page-context VTT interception
 
 ---
 
@@ -79,3 +82,23 @@ Chrome extensions do NOT auto-reload. After code changes:
 | **Change repo settings** | **Browser** | - |
 
 **Rule:** Only use browser automation for things that genuinely can't be done via CLI (like renaming a repo or changing settings that have no CLI equivalent).
+
+---
+
+## Chrome Web Store Submission (Added: 2026-01-22)
+
+**Assets location:** `store-assets/`
+- `icon-128.png` - 128x128 extension icon
+- `screenshot-dual-subs-1.png` - 1280x800
+- `screenshot-dual-subs-2.png` - 1280x800
+- `screenshot-settings.png` - 1280x800 (padded to maintain aspect ratio)
+
+**Listing text:** `chrome-store-listing.md`
+
+**Privacy practices justifications provided:**
+- downloads: Save audio recordings to user's device
+- storage: Save user preferences and cache translations locally
+- host_permissions: Send subtitle text to translation APIs (user's choice)
+- remote code: None used
+
+**Packaging:** Run `bash package_project.sh` to create zip for upload

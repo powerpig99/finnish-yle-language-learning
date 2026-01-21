@@ -19,7 +19,9 @@
 ---
 
 ## Project Overview
-A Chrome extension (v4.1.0, Manifest v3) that provides dual subtitles (original + translation), popup dictionary, and playback controls for YLE Areena (Finnish public broadcasting).
+A Chrome extension (v5.0.0, Manifest v3) that provides dual subtitles (original + translation), popup dictionary, and playback controls for YLE Areena (Finnish public broadcasting).
+
+**Chrome Web Store:** Submitted January 2026 (pending review)
 
 **Supported Platform:** YLE Areena only (`https://areena.yle.fi/*`)
 
@@ -464,6 +466,39 @@ if (wrapper) {
 ```
 
 **Key insight:** Observers/listeners only catch changes, not initial state. Always check the initial state at startup.
+
+### 17. Failed Translations Being Cached as Original Text (Session 2026-01-22)
+**Problem:** When translation API calls failed (network error, rate limit, etc.), the extension would fall back to showing the original Finnish text AND cache it as the "translation". This meant the text would never be retried.
+
+**Root Cause:** In `background.js`, the batch translation function returned the original text on error:
+```javascript
+// WRONG - caches original text as "translation"
+if (!response.ok) {
+  translations.push(text);  // Original text cached as translation!
+  continue;
+}
+```
+
+**Solution (background.js):**
+Return `null` for failed translations so they can be retried:
+```javascript
+// CORRECT - return null so it will be retried
+if (!response.ok) {
+  translations.push(null);
+  continue;
+}
+```
+
+And in `contentscript.js`, skip null translations:
+```javascript
+// Skip failed translations (null) - they will be retried next time
+if (translatedText === null || translatedText === undefined) {
+  console.info(`Translation failed for "${text.substring(0, 30)}..." - will retry later`);
+  continue;
+}
+```
+
+**Key insight:** Don't cache failures. Return a sentinel value (null) that callers can check, and let the retry logic handle it.
 
 ---
 
