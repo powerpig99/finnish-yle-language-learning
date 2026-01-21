@@ -62,3 +62,20 @@ Chrome extensions do NOT auto-reload. After code changes:
 - Verify the feature works visually
 - Check browser console for errors/logs
 - Don't assume code changes work - verify them
+
+---
+
+## Tool Selection: CLI vs Browser (Added: 2026-01-21)
+
+**Prefer CLI tools over browser automation.** Browser automation should be a last resort.
+
+| Task | Use This | NOT This |
+|------|----------|----------|
+| Git operations | `git` CLI | Browser |
+| Create/push tags | `git tag` + `git push` | Browser |
+| Create releases | `gh release create` | Browser |
+| View PR/issues | `gh pr view`, `gh issue view` | Browser |
+| **Rename repo** | **Browser** (no CLI option) | - |
+| **Change repo settings** | **Browser** | - |
+
+**Rule:** Only use browser automation for things that genuinely can't be done via CLI (like renaming a repo or changing settings that have no CLI equivalent).
