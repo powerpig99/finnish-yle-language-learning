@@ -82,6 +82,7 @@ async function safeStorageSet(items) {
 // eslint-disable-next-line no-unused-vars
 async function safeSendMessage(message) {
   if (!isExtensionContextValid()) {
+    showExtensionInvalidatedToast();
     return null;
   }
   try {
@@ -113,7 +114,7 @@ function showExtensionInvalidatedToast() {
   toast.innerHTML = `
     <div class="dsc-context-toast__content">
       <span class="dsc-context-toast__icon">⚠️</span>
-      <span class="dsc-context-toast__text">Extension updated. Please refresh the page to continue using dual subtitles.</span>
+      <span class="dsc-context-toast__text">Extension updated. Refresh the page to re-enable controls and settings.</span>
       <button class="dsc-context-toast__refresh" onclick="location.reload()">Refresh</button>
       <button class="dsc-context-toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
     </div>

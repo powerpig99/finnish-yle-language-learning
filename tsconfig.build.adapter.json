@@ -1,25 +1,19 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
+    "allowJs": false,
     "target": "ES2020",
     "module": "None",
     "lib": ["ES2020", "DOM", "WebWorker"],
+    "rootDir": ".",
+    "outDir": "dist",
     "strict": false,
     "skipLibCheck": true,
-    "types": ["chrome"]
+    "types": ["chrome"],
+    "sourceMap": true
   },
   "include": [
-    "types.js",
-    "database.js",
-    "utils.js",
-    "background.ts",
-    "contentscript.ts",
-    "content/**/*.ts",
     "platforms/yle/yle-adapter.ts",
-    "globals.d.ts",
-    "popup.js"
+    "globals.d.ts"
   ],
   "exclude": [
     "node_modules",

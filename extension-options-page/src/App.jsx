@@ -23,6 +23,7 @@ const PROVIDERS = [
   { id: "claude", name: "Claude (Anthropic)", description: "High quality AI", link: "https://console.anthropic.com/settings/keys" },
   { id: "gemini", name: "Gemini (Google AI)", description: "Google's AI model", link: "https://aistudio.google.com/apikey" },
   { id: "grok", name: "Grok (xAI)", description: "xAI's model", link: "https://console.x.ai" },
+  { id: "kimi", name: "Kimi (Moonshot)", description: "Kimi 2.5 for Kimi Coding", link: "https://platform.moonshot.ai" },
 ];
 
 const FONT_SIZES = [
@@ -79,6 +80,7 @@ function App() {
     claude: "",
     gemini: "",
     grok: "",
+    kimi: "",
   });
   const [targetLanguage, setTargetLanguage] = useState("EN-US");
   const [subtitleFontSize, setSubtitleFontSize] = useState("medium");
@@ -104,6 +106,7 @@ function App() {
       "claudeApiKey",
       "geminiApiKey",
       "grokApiKey",
+      "kimiApiKey",
       "subtitleFontSize",
     ])
       .then((result) => {
@@ -114,6 +117,7 @@ function App() {
           claude: result.claudeApiKey || "",
           gemini: result.geminiApiKey || "",
           grok: result.grokApiKey || "",
+          kimi: result.kimiApiKey || "",
         });
       })
       .catch(console.error);
@@ -224,6 +228,7 @@ function App() {
               )}
             </div>
           )}
+
         </section>
 
         <hr className="divider" />

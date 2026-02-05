@@ -1,16 +1,15 @@
 zip -r yle-dual-sub-extension.zip \
   manifest.json \
   icons/ \
-  background.js \
+  dist/ \
   database.js \
   utils.js \
   types.js \
-  contentscript.js \
   inject.js \
   styles.css \
   popup.html \
   popup.js \
   controls/ \
-  platforms/ \
+  platforms/yle/yle-injected.js \
   lib/ \
   extension-options-page/dist/

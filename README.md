@@ -23,7 +23,7 @@ A Chrome extension for learning Finnish through YLE Areena (Finnish public broad
 - **Multiple Translation Providers**:
   - Google Translate (free, no API key required)
   - DeepL (high quality, free API key available)
-  - Claude, Gemini, Grok (AI-powered with context)
+  - Claude, Gemini, Grok, Kimi (AI-powered with context)
 - **Smart Caching**: Translations cached locally for instant replay
 - **Clean Viewing Mode**: Controls hide during playback, appear on mouse movement
 - **Fullscreen Support**: All features work in fullscreen mode
@@ -78,6 +78,7 @@ Click the extension icon → Settings to:
 | Claude | Yes | Context-aware word lookups |
 | Gemini | Yes | Context-aware word lookups |
 | Grok | Yes | Context-aware word lookups |
+| Kimi | Yes | Context-aware word lookups |
 
 ## How It Works
 
@@ -92,13 +93,19 @@ Click the extension icon → Settings to:
 
 ```
 ├── manifest.json           # Chrome extension manifest (v3)
-├── background.js           # Service worker for API calls
-├── contentscript.js        # Main content script
+├── background.ts           # Service worker source (compiled to dist/)
+├── contentscript.ts        # Main content script source (compiled to dist/)
+├── content/                # Content-script modules (compiled to dist/content/)
+│   ├── settings.ts         # Settings + state management
+│   ├── word-translation.ts # Popup dictionary + tooltip logic
+│   ├── subtitle-dom.ts     # Subtitle DOM + mutation observers
+│   └── ui-events.ts        # Mouse/focus handling + UI event listeners
+│   └── runtime-messages.ts # Popup + runtime message handlers
 ├── database.js             # IndexedDB caching
 ├── styles.css              # UI styling
 ├── popup.html/js           # Extension popup
 ├── platforms/
-│   └── yle/                # YLE Areena adapter
+│   └── yle/                # YLE Areena adapter (source in .ts)
 ├── controls/               # Unified control panel
 │   ├── control-panel.js    # UI components
 │   ├── control-actions.js  # Action handlers
@@ -110,6 +117,9 @@ Click the extension icon → Settings to:
 ### Building
 
 ```bash
+# Build core extension scripts (TypeScript)
+npm run build:extension
+
 # Build the options page
 cd extension-options-page
 npm install

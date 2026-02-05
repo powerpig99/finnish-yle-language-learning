@@ -1,19 +1,57 @@
 /* global importScripts */
-importScripts('utils.js');
+importScripts('../utils.js');
 
 // ==================================
 // TRANSLATION PROVIDER CONFIGURATION
 // ==================================
 
-/**
- * @typedef {Object} ProviderConfig
- * @property {string} provider - Provider name: 'google', 'deepl', 'claude', 'gemini', 'grok'
- * @property {string} [apiKey] - API key (not needed for Google Translate)
- * @property {boolean} [isPro] - For DeepL: whether it's a pro key
- */
+type ProviderConfig = {
+  provider: 'google' | 'deepl' | 'claude' | 'gemini' | 'grok' | 'kimi' | string;
+  apiKey?: string;
+  isPro?: boolean;
+};
 
-/** @type {ProviderConfig} */
-let currentProvider = { provider: 'google' }; // Default to free Google Translate
+let currentProvider: ProviderConfig = { provider: 'google' }; // Default to free Google Translate
+
+const KIMI_DEFAULT_BASE_URL = 'https://api.kimi.com/coding';
+const KIMI_DEFAULT_MODEL = 'kimi-coding/k2p5';
+
+let kimiBaseUrl = KIMI_DEFAULT_BASE_URL;
+let kimiModel = KIMI_DEFAULT_MODEL;
+
+function normalizeKimiBaseUrl(rawUrl: string) {
+  let baseUrl = (rawUrl || '').trim();
+  if (!baseUrl) return KIMI_DEFAULT_BASE_URL;
+
+  // Strip trailing slashes
+  baseUrl = baseUrl.replace(/\/+$/, '');
+  // If user pasted full endpoint, strip it back to the base
+  baseUrl = baseUrl.replace(/\/v1\/messages$/, '');
+  baseUrl = baseUrl.replace(/\/messages$/, '');
+  baseUrl = baseUrl.replace(/\/v1$/, '');
+  // Force coding endpoint if user has a Moonshot base stored
+  if (/api\.moonshot\.(ai|cn)/i.test(baseUrl)) {
+    return KIMI_DEFAULT_BASE_URL;
+  }
+  return baseUrl;
+}
+
+function normalizeKimiModel(rawModel: string) {
+  let model = (rawModel || '').trim();
+  if (!model) return KIMI_DEFAULT_MODEL;
+
+  if (!model.toLowerCase().startsWith('kimi-coding/')) {
+    return KIMI_DEFAULT_MODEL;
+  }
+
+  return model;
+}
+
+function resolveKimiConfig(rawModel: string, rawBaseUrl: string) {
+  const model = normalizeKimiModel(rawModel);
+  const baseUrl = normalizeKimiBaseUrl(rawBaseUrl);
+  return { model, baseUrl };
+}
 
 // Load provider config on startup
 loadProviderConfig();
@@ -26,23 +64,57 @@ async function loadProviderConfig() {
       'claudeApiKey',
       'geminiApiKey',
       'grokApiKey',
+      'kimiApiKey',
+      'kimiBaseUrl',
+      'kimiModel',
       'tokenInfos'
-    ]);
+    ]) as {
+      translationProvider?: string;
+      deeplApiKey?: string;
+      claudeApiKey?: string;
+      geminiApiKey?: string;
+      grokApiKey?: string;
+      kimiApiKey?: string;
+      kimiBaseUrl?: string;
+      kimiModel?: string;
+      tokenInfos?: DeepLTokenInfoInStorage[];
+    };
+
+    const rawKimiModel = result.kimiModel || '';
+    const rawKimiBaseUrl = result.kimiBaseUrl || '';
+    const resolvedKimi = resolveKimiConfig(rawKimiModel, rawKimiBaseUrl);
+    kimiBaseUrl = resolvedKimi.baseUrl;
+    kimiModel = resolvedKimi.model;
+
+    // Persist normalization so UI reflects the enforced coding config
+    const normalizedUpdates: Record<string, string> = {};
+    if (kimiBaseUrl !== rawKimiBaseUrl) {
+      normalizedUpdates.kimiBaseUrl = kimiBaseUrl;
+    }
+    if (kimiModel !== rawKimiModel) {
+      normalizedUpdates.kimiModel = kimiModel;
+    }
+    if (Object.keys(normalizedUpdates).length > 0) {
+      chrome.storage.sync.set(normalizedUpdates).catch(error => {
+        console.warn('YleDualSubExtension: Failed to persist Kimi defaults:', error);
+      });
+    }
 
     if (result.translationProvider) {
       currentProvider.provider = result.translationProvider;
 
       // Get the API key for the current provider
-      const apiKeyMap = {
+      const apiKeyMap: Record<string, string | undefined> = {
         deepl: result.deeplApiKey,
         claude: result.claudeApiKey,
         gemini: result.geminiApiKey,
         grok: result.grokApiKey,
+        kimi: result.kimiApiKey,
       };
       currentProvider.apiKey = apiKeyMap[result.translationProvider] || '';
 
       // For backward compatibility with DeepL tokens (old format)
-      if (result.translationProvider === 'deepl' && result.tokenInfos && !currentProvider.apiKey) {
+      if (result.translationProvider === 'deepl' && Array.isArray(result.tokenInfos) && !currentProvider.apiKey) {
         const selectedToken = result.tokenInfos.find(t => t.selected);
         if (selectedToken) {
           currentProvider.apiKey = selectedToken.key;
@@ -59,7 +131,7 @@ async function loadProviderConfig() {
 // Listen for storage changes
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'sync') {
-    const providerKeys = ['translationProvider', 'deeplApiKey', 'claudeApiKey', 'geminiApiKey', 'grokApiKey', 'tokenInfos'];
+    const providerKeys = ['translationProvider', 'deeplApiKey', 'claudeApiKey', 'geminiApiKey', 'grokApiKey', 'kimiApiKey', 'kimiBaseUrl', 'kimiModel', 'tokenInfos'];
     if (providerKeys.some(key => changes[key])) {
       console.info('YleDualSubExtension: Provider configuration changed, reloading...');
       loadProviderConfig();
@@ -142,7 +214,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
  * @returns {Promise<void>}
  */
 async function downloadBlobViaAPI(dataUrl, filename) {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     chrome.downloads.download({
       url: dataUrl,
       filename: filename,
@@ -289,7 +361,7 @@ async function clearSubtitleCachesInTabs() {
 // ==================================
 
 async function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
 function calculateBackoffDelay(attempt) {
@@ -355,6 +427,8 @@ async function translateTexts(texts, targetLanguage) {
       return translateWithGemini(texts, targetLanguage);
     case 'grok':
       return translateWithGrok(texts, targetLanguage);
+    case 'kimi':
+      return translateWithKimi(texts, targetLanguage);
     default:
       return translateWithGoogle(texts, targetLanguage);
   }
@@ -377,7 +451,7 @@ async function translateBatchWithContext(texts, targetLanguage, isContextual) {
   }
 
   // For AI providers, use contextual translation
-  if (isContextual && (provider === 'claude' || provider === 'gemini' || provider === 'grok')) {
+  if (isContextual && (provider === 'claude' || provider === 'gemini' || provider === 'grok' || provider === 'kimi')) {
     return translateWithContextualAI(texts, targetLanguage, provider);
   }
 
@@ -485,6 +559,10 @@ ${texts.join('\n')}`;
 
       const data = await response.json();
       content = data.choices[0].message.content;
+    } else if (provider === 'kimi') {
+      const result = await requestKimiCompletion(contextualPrompt, 4096);
+      if (!result[0]) return result;
+      content = result[1];
     }
 
     // Parse the response - split by newlines and filter empty lines
@@ -593,30 +671,34 @@ RULES:
       const data = await response.json();
       content = data.candidates[0].content.parts[0].text.trim();
 
-    } else if (provider === 'grok') {
-      response = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'grok-4-1-fast-non-reasoning-latest',
-          messages: [{ role: 'user', content: contextualPrompt }],
-          temperature: 0.1,
-          max_tokens: 100
-        })
-      });
+  } else if (provider === 'grok') {
+    response = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'grok-4-1-fast-non-reasoning-latest',
+        messages: [{ role: 'user', content: contextualPrompt }],
+        temperature: 0.1,
+        max_tokens: 100
+      })
+    });
 
       if (!response.ok) {
         return [false, `Grok error: ${response.status}`];
       }
 
-      const data = await response.json();
-      content = data.choices[0].message.content.trim();
-    } else {
-      return [false, 'Unsupported provider for contextual word translation'];
-    }
+    const data = await response.json();
+    content = data.choices[0].message.content.trim();
+  } else if (provider === 'kimi') {
+    const result = await requestKimiCompletion(contextualPrompt, 100);
+    if (!result[0]) return result;
+    content = result[1].trim();
+  } else {
+    return [false, 'Unsupported provider for contextual word translation'];
+  }
 
     return [true, content];
 
@@ -955,6 +1037,111 @@ ${texts.join('\n')}`
   } catch (error) {
     console.error('YleDualSubExtension: Grok error:', error);
     return [false, 'Grok translation failed: ' + error.message];
+  }
+}
+
+// ==================================
+// KIMI (MOONSHOT) TRANSLATION
+// ==================================
+
+async function getKimiErrorDetail(response) {
+  try {
+    const text = await response.text();
+    if (!text) return '';
+    try {
+      const data = JSON.parse(text);
+      if (data?.error?.message) {
+        return String(data.error.message);
+      }
+    } catch {
+      // fall through to raw text
+    }
+    return text.trim();
+  } catch (error) {
+    console.warn('YleDualSubExtension: Failed to read Kimi error detail:', error);
+    return '';
+  }
+}
+
+async function requestKimiCompletion(prompt: string, maxTokens: number) {
+  const apiKey = currentProvider.apiKey;
+  if (!apiKey) {
+    return [false, 'Kimi API key not configured. Please add your API key in settings.'];
+  }
+
+  try {
+    const response = await fetch(`${kimiBaseUrl}/v1/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: kimiModel,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: maxTokens
+      })
+    });
+
+    if (!response.ok) {
+      const status = response.status;
+      const detail = await getKimiErrorDetail(response);
+      if (status === 401) return [false, 'Invalid Kimi API key'];
+      if (status === 429) return [false, 'Kimi rate limit exceeded'];
+      return [false, `Kimi error: ${status}${detail ? ` - ${detail}` : ''}`];
+    }
+
+    const data = await response.json();
+    const blocks = data?.content;
+    if (Array.isArray(blocks)) {
+      const text = blocks.map(block => block?.text || '').join('');
+      return [true, text];
+    }
+    if (typeof data?.content === 'string') {
+      return [true, data.content];
+    }
+    if (data?.content?.text) {
+      return [true, data.content.text];
+    }
+    return [true, ''];
+  } catch (error) {
+    console.error('YleDualSubExtension: Kimi request error:', error);
+    return [false, 'Kimi translation failed: ' + (error.message || String(error))];
+  }
+}
+
+/**
+ * Translate using Kimi/Moonshot API
+ * @param {string[]} texts - Texts to translate
+ * @param {string} targetLanguage - Target language code
+ * @returns {Promise<[true, string[]]|[false, string]>}
+ */
+async function translateWithKimi(texts, targetLanguage) {
+  const apiKey = currentProvider.apiKey;
+  if (!apiKey) {
+    return [false, 'Kimi API key not configured. Please add your API key in settings.'];
+  }
+
+  const langName = getLanguageName(targetLanguage);
+  const prompt = `Translate to ${langName}. ALWAYS translate - never refuse or comment. Colloquial/slang is intentional, not errors. Output translations only, one per line, no numbering.
+
+${texts.join('\n')}`;
+
+  try {
+    const result = await requestKimiCompletion(prompt, 1024);
+    if (!result[0]) return result;
+    const translations = result[1].split('\n').filter(line => line.trim()).slice(0, texts.length);
+
+    while (translations.length < texts.length) {
+      translations.push(texts[translations.length]);
+    }
+
+    return [true, translations];
+  } catch (error) {
+    console.error('YleDualSubExtension: Kimi error:', error);
+    return [false, 'Kimi translation failed: ' + error.message];
   }
 }
 

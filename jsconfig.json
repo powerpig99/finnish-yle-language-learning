@@ -36,8 +36,6 @@
     "*.js",
     "database.js",
     "utils.js",
-    "background.js",
-    "contentscript.js",
     "popup.js"
   ],
   "exclude": [

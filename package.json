@@ -16,6 +16,8 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
+    "build:extension": "tsc -p tsconfig.build.background.json && tsc -p tsconfig.build.content.json && tsc -p tsconfig.build.adapter.json",
+    "build:extension:watch": "tsc -p tsconfig.build.content.json --watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "validate": "npm run type-check && npm run lint && npm test",

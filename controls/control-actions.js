@@ -286,7 +286,26 @@ const ControlActions = {
    */
   openSettings() {
     if (typeof chrome !== 'undefined' && chrome.runtime) {
-      chrome.runtime.sendMessage({ action: 'openOptionsPage' });
+      if (typeof safeSendMessage === 'function') {
+        safeSendMessage({ action: 'openOptionsPage' })
+          .then((response) => {
+            if (response === null && typeof showExtensionInvalidatedToast === 'function') {
+              const shouldRefresh = typeof confirm === 'function'
+                ? confirm('Extension updated. Refresh this page now to open settings?')
+                : false;
+              if (shouldRefresh) {
+                location.reload();
+                return;
+              }
+              showExtensionInvalidatedToast();
+            }
+          })
+          .catch(err => {
+            console.warn('DualSubExtension: Failed to open options page:', err);
+          });
+      } else {
+        chrome.runtime.sendMessage({ action: 'openOptionsPage' });
+      }
     }
   },
 

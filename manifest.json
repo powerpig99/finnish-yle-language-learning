@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YLE Finnish Learner",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Learn Finnish with dual subtitles, popup dictionary, and playback controls on YLE Areena.",
   "icons": {
     "16": "icons/icon.png",
@@ -9,7 +9,7 @@
     "128": "icons/icon.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "dist/background.js"
   },
   "content_scripts": [
     {
@@ -17,7 +17,7 @@
       "run_at": "document_end",
       "js": [
         "lib/lamejs.min.js",
-        "platforms/yle/yle-adapter.js",
+        "dist/platforms/yle/yle-adapter.js",
         "controls/control-icons.js",
         "controls/control-actions.js",
         "controls/control-keyboard.js",
@@ -30,7 +30,14 @@
         "controls/control-integration.js",
         "database.js",
         "utils.js",
-        "contentscript.js",
+        "dist/content/settings.js",
+        "dist/content/translation-api.js",
+        "dist/content/translation-queue.js",
+        "dist/content/word-translation.js",
+        "dist/content/subtitle-dom.js",
+        "dist/content/ui-events.js",
+        "dist/contentscript.js",
+        "dist/content/runtime-messages.js",
         "inject.js"
       ],
       "css": ["styles.css"]
@@ -42,7 +49,10 @@
     "https://translate.googleapis.com/*",
     "https://api.anthropic.com/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://api.x.ai/*"
+    "https://api.x.ai/*",
+    "https://api.moonshot.ai/*",
+    "https://api.moonshot.cn/*",
+    "https://api.kimi.com/*"
   ],
   "permissions": ["storage", "downloads"],
   "web_accessible_resources": [

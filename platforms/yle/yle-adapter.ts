@@ -5,7 +5,7 @@
  * Handles DOM selectors, control bar integration, and subtitle detection specific to YLE.
  */
 
-const YLEAdapter = {
+var YLEAdapter = {
   name: 'yle',
   sourceLanguage: null, // Dynamic - detected from subtitles
   _detectedLanguage: null,
@@ -70,7 +70,7 @@ const YLEAdapter = {
    * @returns {HTMLVideoElement|null}
    */
   getVideoElement() {
-    return document.querySelector(this.SELECTORS.video);
+    return document.querySelector(this.SELECTORS.video) as HTMLVideoElement | null;
   },
 
   /**
@@ -78,7 +78,7 @@ const YLEAdapter = {
    * @returns {HTMLElement|null}
    */
   getPlayerUI() {
-    return document.querySelector(this.SELECTORS.playerUI);
+    return document.querySelector(this.SELECTORS.playerUI) as HTMLElement | null;
   },
 
   /**
@@ -86,7 +86,17 @@ const YLEAdapter = {
    * @returns {HTMLElement|null}
    */
   getSubtitleWrapper() {
-    return document.querySelector(this.SELECTORS.subtitlesWrapper);
+    const primary = document.querySelector(this.SELECTORS.subtitlesWrapper) as HTMLElement | null;
+    if (primary) return primary;
+
+    const playerUI = document.querySelector(this.SELECTORS.playerUI) as HTMLElement | null;
+    const scope = playerUI || document;
+    return (scope.querySelector('[data-testid*="subtitles"]') ||
+            scope.querySelector('[data-testid*="subtitle"]') ||
+            scope.querySelector('[aria-live="polite"]') ||
+            scope.querySelector('[role="status"]') ||
+            scope.querySelector('[class*="Subtitles"]') ||
+            scope.querySelector('[class*="Subtitle"]')) as HTMLElement | null;
   },
 
   /**
@@ -98,7 +108,7 @@ const YLEAdapter = {
     const delay = 150;
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const container = document.querySelector(this.SELECTORS.bottomControlBar);
+      const container = document.querySelector(this.SELECTORS.bottomControlBar) as HTMLElement | null;
       if (container) {
         return container;
       }
@@ -118,8 +128,8 @@ const YLEAdapter = {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const titleElement = document.querySelector(this.SELECTORS.videoTitle);
       if (titleElement) {
-        const texts = Array.from(titleElement.querySelectorAll('span'))
-          .map(span => span.textContent.trim())
+        const texts = (Array.from(titleElement.querySelectorAll('span')) as HTMLElement[])
+          .map(span => (span.textContent || '').trim())
           .filter(text => text.length > 0);
         return texts.join(' | ');
       }
@@ -135,7 +145,12 @@ const YLEAdapter = {
    */
   isSubtitleMutation(mutation) {
     try {
-      return mutation?.target?.dataset?.['testid'] === 'subtitles-wrapper';
+      const target = mutation?.target as HTMLElement | null;
+      if (target?.dataset?.['testid'] === 'subtitles-wrapper') {
+        return true;
+      }
+      const wrapper = this.getSubtitleWrapper();
+      return !!(wrapper && target === wrapper);
     } catch (error) {
       return false;
     }
@@ -151,12 +166,13 @@ const YLEAdapter = {
       return false;
     }
 
-    for (const node of Array.from(mutation.addedNodes)) {
+    const nodes = Array.from(mutation.addedNodes) as Node[];
+    for (const node of nodes) {
       if (node.nodeType !== Node.ELEMENT_NODE) {
         continue;
       }
 
-      const element = /** @type {HTMLElement} */ (node);
+      const element = node as HTMLElement;
 
       if (element.tagName === 'VIDEO' || element.querySelector?.('video')) {
         return true;
@@ -223,7 +239,7 @@ const YLEAdapter = {
    * @param {Object} options
    * @returns {string}
    */
-  getControlBarHTML(options = {}) {
+  getControlBarHTML(options: { dualSubEnabled?: boolean; autoPauseEnabled?: boolean; playbackSpeed?: number } = {}) {
     const {
       dualSubEnabled = false,
       autoPauseEnabled = false,

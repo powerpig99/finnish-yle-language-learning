@@ -58,7 +58,7 @@ describe('Database Functions', () => {
         test('should open database successfully', async () => {
             expect(db).toBeDefined();
             expect(db.name).toBe('YleDualSubCache');
-            expect(db.version).toBe(2);
+            expect(db.version).toBe(3);
         });
 
         test('should have correct object stores', () => {
