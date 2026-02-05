@@ -31,3 +31,6 @@ Screenshot*.png
 
 # Local-only docs
 CLAUDE.md
+
+# Store assets (local)
+store-assets/yle-finnish-learner-icon-128.png

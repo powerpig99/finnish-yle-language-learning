@@ -5,7 +5,7 @@
 **Extension Name:** YLE Finnish Learner
 
 **Short Description (132 chars max):**
-Learn Finnish with YLE Areena. Dual subtitles, click-to-translate words, playback controls for immersive language learning.
+Learn Finnish on YLE Areena with dual subtitles, instant word translations, and smart playback controls.
 
 **Category:** Education
 
@@ -17,42 +17,39 @@ Learn Finnish with YLE Areena. Dual subtitles, click-to-translate words, playbac
 
 Learn Finnish naturally by watching Finnish TV shows on YLE Areena with dual subtitles and interactive features.
 
-**Key Features:**
+Key features:
+• Dual subtitles: Finnish plus your target language (20+ languages)
+• Click-to-translate: Click any Finnish word for instant translation (Wiktionary + AI fallback)
+• Playback controls: Skip subtitles (comma/period), repeat line (R), speed 0.5x–2x (brackets)
+• Auto-pause: Pause after each subtitle line (P)
+• Audio download: Extract speech audio for offline practice (A)
+• Smart caching: Translations cached locally for fast replay
 
-• Dual Subtitles - See Finnish subtitles with translations in your target language (supports 20+ languages including English, Chinese, Japanese, Korean, German, Spanish, and more)
+Translation providers:
+• Google Translate (free, no setup)
+• DeepL (high quality, free API available)
+• Claude, Gemini, Grok
+• Kimi 2.5 for Kimi Coding
 
-• Click-to-Translate - Click any Finnish word to instantly see its translation. Uses Wiktionary definitions with AI-powered fallback for context-aware translations
+Keyboard shortcuts:
+• D: Toggle dual subtitles
+• P: Toggle auto-pause
+• R: Repeat current subtitle
+• , / .: Previous/next subtitle
+• [ / ]: Decrease/increase speed
+• A: Download audio
 
-• Playback Controls - Skip between subtitles (comma/period keys), repeat current line (R key), adjust speed 0.5x-2x (bracket keys)
+How to use:
+1) Go to areena.yle.fi
+2) Play a video and enable Finnish subtitles in the YLE player
+3) Click the DS button or press D to enable dual subtitles
+4) Click any Finnish word to see the translation
 
-• Auto-Pause - Automatically pause after each subtitle line to study at your own pace (P key to toggle)
+Privacy:
+No analytics or tracking. Translation text and word lookups are sent directly from your browser to the provider you choose. API keys are stored locally in Chrome sync storage. No data is sent to developer servers.
 
-• Audio Download - Extract speech audio from videos for offline listening practice (A key)
-
-• Smart Caching - Translations are cached locally for instant replay
-
-**Translation Providers:**
-- Google Translate (free, no setup required)
-- DeepL (high quality, free API available)
-- Claude, Gemini, Grok (AI-powered contextual translations)
-
-**Keyboard Shortcuts:**
-- D: Toggle dual subtitles
-- P: Toggle auto-pause
-- R: Repeat current subtitle
-- , / . : Previous/next subtitle
-- [ / ] : Decrease/increase speed
-- A: Download audio
-
-**How to Use:**
-1. Go to areena.yle.fi
-2. Play any video and enable Finnish subtitles via YLE's player menu
-3. Click the "DS" button in controls or press D to enable dual subtitles
-4. Click any Finnish word to see its translation
-
-**Privacy:** All data stays in your browser. No tracking, no analytics. API keys stored locally in Chrome sync storage.
-
-**Note:** Currently supports YLE Areena only. More platforms planned for future releases.
+Note:
+Supports YLE Areena only.
 
 ---
 
